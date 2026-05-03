@@ -38,10 +38,16 @@ def get_engine():
         _engine = engine
     return _engine
 
+
 @app.get("/health")
 async def health_check():
     """Liveness probe para orquestradores e load balancers"""
-    model_ready = engine.model is not None
+    try:
+        engine = get_engine()
+        model_ready = engine.model is not None
+    except Exception:
+        model_ready = False
+    
     if not model_ready:
         raise HTTPException(status_code=503, detail="Modelo indisponível")
     return {"status": "ok"}
@@ -61,6 +67,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 async def predict_score(request: Request, payload: TransactionInputSchema, current_user: str = Depends(verify_token)):
     """Avaliação de risco de crédito protegida por JWT e SlowAPI"""
     try:
+        engine = get_engine()
         result = engine.predict(payload.model_dump())
         return ScoreOutputSchema(**result)
     except Exception:
