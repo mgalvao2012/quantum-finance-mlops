@@ -11,7 +11,6 @@ from slowapi.middleware import SlowAPIMiddleware
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from api.auth import Token, create_access_token, verify_token
 from api.schemas import TransactionInputSchema, ScoreOutputSchema
-from model.inference import engine
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -29,6 +28,15 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
+# Lazy load engine to avoid failures in CI
+_engine = None
+
+def get_engine():
+    global _engine
+    if _engine is None:
+        from model.inference import engine
+        _engine = engine
+    return _engine
 
 @app.get("/health")
 async def health_check():
