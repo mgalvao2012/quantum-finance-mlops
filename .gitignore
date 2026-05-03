@@ -1,0 +1,30 @@
+# Ambientes virtuais e variáveis de ambiente local
+venv/
+.venv/
+env/
+.env
+
+# Artefatos do MLflow e Banco de Dados Local
+mlruns/
+*.db
+
+# Feature Store (Feast) - Dados locais e cache
+feature_repo/data/
+feature_repo/*.db
+.feast/
+
+# Relatórios de Drift
+data/drift_reports/*
+!data/drift_reports/.gitkeep
+
+# Dados locais (Prevenção de vazamento de PII e dados financeiros)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Arquivos de cache do Python e compilados
+__pycache__/
+*.py[cod]
+*.class
+.pytest_cache/
