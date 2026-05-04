@@ -10,11 +10,11 @@ MODEL_NAME = os.getenv("MODEL_NAME")
 MIN_ROC_AUC_THRESHOLD = float(os.getenv("MIN_ROC_AUC", "0.75"))
 
 # API Security (JWT) — set API_SECRET_KEY env var in production; never use the default below
-SECRET_KEY = os.getenv("API_SECRET_KEY")
+SECRET_KEY = os.getenv("API_SECRET_KEY", "dev-insecure-secret-change-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("TOKEN_EXPIRE_MIN", "60"))
 
-if os.getenv("ENV", "development") == "production" and not SECRET_KEY:
+if os.getenv("ENV", "development") == "production" and SECRET_KEY == "dev-insecure-secret-change-in-production":
     raise RuntimeError("API_SECRET_KEY must be set to a strong value in production.")
 
 # Diretórios de Dados
