@@ -30,7 +30,16 @@ jobs:
 
     - name: Run Unit Tests (Pytest)
       env:
-        VALID_PARTNERS: "testuser:testpass"
+        ENV=development
+        API_SECRET_KEY=troque_por_uma_chave_forte_aqui
+        VALID_PARTNERS=user:password
+        TOKEN_EXPIRE_MIN=60
+        MLFLOW_TRACKING_URI=sqlite:///mlruns.db
+        EXPERIMENT_NAME=QuantumFinance_Credit_Score_Alternativo
+        MODEL_NAME=XGBoost_Transaction_Score
+        MIN_ROC_AUC=0.75
+        DATA_RAW_URL=https://storage.googleapis.com/ds-publico/IA/BaseDefault01.csv
+        API_URL=http://localhost:8000
       run: |
         pytest tests/
         
