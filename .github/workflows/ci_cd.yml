@@ -14,9 +14,9 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Install Node.js
-      run: |
-        curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
-        apt-get install -y nodejs
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
 
     - name: Set up Python
       uses: actions/setup-python@v4
