@@ -18,8 +18,8 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 # Le as credenciais dos parceiros autorizados a partir de variáveis de ambiente
-_raw_partners = os.getenv("VALID_PARTNERS")
-VALID_PARTNERS = dict(pair.split(":") for pair in _raw_partners.split(",") if ":" in pair)
+_raw_partners = os.getenv("VALID_PARTNERS", "")
+VALID_PARTNERS = dict(pair.split(":") for pair in _raw_partners.split(",") if ":" in pair) if _raw_partners else {}
 
 limiter = Limiter(key_func=get_remote_address)
 

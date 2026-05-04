@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-_raw_partners = os.getenv("VALID_PARTNERS")
-VALID_PARTNERS = dict(pair.split(":") for pair in _raw_partners.split(",") if ":" in pair)
-username, password = list(VALID_PARTNERS.items())[0]
+# Le as credenciais dos parceiros autorizados a partir de variáveis de ambiente
+_raw_partners = os.getenv("VALID_PARTNERS", "")
+VALID_PARTNERS = dict(pair.split(":") for pair in _raw_partners.split(",") if ":" in pair) if _raw_partners else {}
 
 client = TestClient(app)
 
