@@ -13,6 +13,11 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v3
 
+    - name: Install Node.js
+      run: |
+        curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+        apt-get install -y nodejs
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:

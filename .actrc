@@ -1,0 +1,4 @@
+# This file is used by the act tool to run GitHub Actions locally.
+
+--container-architecture linux/amd64
+-P ubuntu-latest=catthehacker/ubuntu:act-24.04
