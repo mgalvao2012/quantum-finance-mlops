@@ -672,8 +672,8 @@ F7    Syntax errors detected by pyflakes
 F82   Undefined names (NameError at runtime) 
 
 # Resultado esperado
--> Nenhum resultado → código está ok, sem erros críticos
--> Qualquer saída → Existem erros reais que causarão falhas em tempo de execução
+-> 0 → código está ok, sem erros críticos
+-> Outro resultado → Existem erros reais que causarão falhas em tempo de execução
 
 # Testes
 .venv/bin/pytest tests/ -v
