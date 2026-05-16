@@ -29,3 +29,5 @@ __pycache__/
 *.py[cod]
 *.class
 .pytest_cache/
+
+.mcp.json

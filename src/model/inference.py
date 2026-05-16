@@ -1,5 +1,6 @@
 import sys
 import os
+import glob
 import pandas as pd
 import mlflow.xgboost
 
@@ -15,11 +16,31 @@ def _score_level(probability: float) -> str:
     return "Alto"
 
 
+def _resolve_model_path() -> str:
+    """Return a path mlflow.xgboost.load_model can read.
+
+    Order of resolution:
+    1. MODEL_PATH env var (explicit override)
+    2. Local artifact dir discovered by glob (portable across host/container)
+    3. Fallback to the MLflow registry URI (only works when the registry's
+       stored source path matches the current filesystem)
+    """
+    explicit = os.getenv("MODEL_PATH")
+    if explicit:
+        return explicit
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    matches = sorted(glob.glob(os.path.join(base_dir, "mlruns", "*", "*", "artifacts", "model")))
+    if matches:
+        return matches[-1]
+
+    return f"models:/{MODEL_NAME}/Production"
+
+
 class InferenceEngine:
     def __init__(self):
         mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-        model_uri = f"models:/{MODEL_NAME}/Production"
-        self.model = mlflow.xgboost.load_model(model_uri)
+        self.model = mlflow.xgboost.load_model(_resolve_model_path())
 
     def predict(self, input_data: dict) -> dict:
         df = pd.DataFrame([input_data])
