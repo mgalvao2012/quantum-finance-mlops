@@ -4,6 +4,8 @@
 > Disciplina: Machine Learning Engineering
 
 > 📘 **Implantação em produção**: para subir esta API ao Azure (Container Apps) e a UI ao Streamlit Community Cloud via CI/CD, consulte **[DeployToAzure.md](DeployToAzure.md)**.
+>
+> 📗 **Consumindo a API**: especificação completa de endpoints, schemas, exemplos de erro e Troubleshooting/FAQ em **[API.md](API.md)**.
 
 ---
 
@@ -157,6 +159,7 @@ quantumfinance_credit_score/
 ├── requirements.txt                # Dependências Python fixadas por versão (ambiente completo)
 ├── requirements-api.txt            # Dependências apenas de runtime de inferência (imagem Docker)
 ├── setup.sh                        # Script de configuração completa do ambiente
+├── API.md                          # Documentação da API (endpoints, exemplos, FAQ)
 ├── DeployToAzure.md                # Guia completo de implantação no Azure + Streamlit Cloud
 └── README.md                       # Este arquivo
 ```
@@ -232,7 +235,7 @@ Todas as configurações possuem valores padrão para desenvolvimento local. **E
 |---|---|---|---|
 | `API_SECRET_KEY` | `quantum_finance_super_secret_key_mock` | **Sim** | Chave secreta para assinatura dos tokens JWT |
 | `ENV` | `development` | **Sim** | Defina como `production` para ativar validações de segurança |
-| `VALID_PARTNERS` | `partner_a:password123` | **Sim** | Credenciais dos parceiros no formato `user:senha,user2:senha2` |
+| `VALID_PARTNERS` | `seu_usuario:sua_senha` | **Sim** | Credenciais dos parceiros no formato `user:senha,user2:senha2` |
 | `MLFLOW_TRACKING_URI` | `sqlite:////<raiz>/mlruns.db` | Não | URI do servidor MLflow |
 | `EXPERIMENT_NAME` | `QuantumFinance_Credit_Score_Alternativo` | Não | Nome do experimento no MLflow |
 | `MODEL_NAME` | `XGBoost_Transaction_Score` | Não | Nome do modelo no MLflow Registry |
@@ -354,6 +357,8 @@ python src/model/train.py
 
 **Arquivo:** [src/api/main.py](src/api/main.py)
 
+> 📗 **Documentação completa para consumidores da API** (exemplos de erro, Troubleshooting/FAQ, schemas detalhados): [API.md](API.md).
+
 ### Inicialização
 
 ```bash
@@ -396,7 +401,7 @@ Autentica um parceiro e retorna um token JWT Bearer.
 
 ```bash
 curl -X POST http://localhost:8000/token \
-  -d "username=partner_a&password=password123"
+  -d "username=seu_usuario&password=sua_senha"
 ```
 
 **Resposta 200:**
