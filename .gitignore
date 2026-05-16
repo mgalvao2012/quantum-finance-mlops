@@ -5,8 +5,9 @@ env/
 .env
 
 # Artefatos do MLflow e Banco de Dados Local
-mlruns/
-*.db
+# mlruns/ e mlruns.db são versionados intencionalmente para o build Docker
+# Feature Store databases remain ignored
+feature_repo/*.db
 
 # Feature Store (Feast) - Dados locais e cache
 feature_repo/data/

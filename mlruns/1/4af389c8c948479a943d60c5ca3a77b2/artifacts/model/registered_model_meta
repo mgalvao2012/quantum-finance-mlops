@@ -1,0 +1,2 @@
+model_name: XGBoost_Transaction_Score
+model_version: '1'
