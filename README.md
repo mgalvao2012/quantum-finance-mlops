@@ -3,6 +3,8 @@
 > Trabalho Final — MBA em Data Science & IA | FIAP  
 > Disciplina: Machine Learning Engineering
 
+> 📘 **Implantação em produção**: para subir esta API ao Azure (Container Apps) e a UI ao Streamlit Community Cloud via CI/CD, consulte **[DeployToAzure.md](DeployToAzure.md)**.
+
 ---
 
 ## Sumário
@@ -22,8 +24,9 @@
 13. [Rastreamento de Experimentos (MLflow)](#rastreamento-de-experimentos-mlflow)
 14. [Testes](#testes)
 15. [CI/CD](#cicd)
-16. [Segurança](#segurança)
-17. [Decisões de Design](#decisões-de-design)
+16. [Implantação no Azure](#implantação-no-azure)
+17. [Segurança](#segurança)
+18. [Decisões de Design](#decisões-de-design)
 
 ---
 
@@ -133,6 +136,7 @@ quantumfinance_credit_score/
 │   │   └── schemas.py              # Schemas Pydantic de entrada e saída
 │   │
 │   ├── app/
+│   │   ├── requirements.txt        # Dependências enxutas para Streamlit Community Cloud
 │   │   └── streamlit_app.py        # Interface web para consulta de scores
 │   │
 │   ├── data/
@@ -148,8 +152,12 @@ quantumfinance_credit_score/
 ├── tests/
 │   └── test_api.py                 # Testes de integração da API (pytest)
 │
-├── requirements.txt                # Dependências Python fixadas por versão
+├── Dockerfile                      # Build multi-stage da imagem da API (deploy no Azure)
+├── .dockerignore                   # Exclusões do contexto de build Docker
+├── requirements.txt                # Dependências Python fixadas por versão (ambiente completo)
+├── requirements-api.txt            # Dependências apenas de runtime de inferência (imagem Docker)
 ├── setup.sh                        # Script de configuração completa do ambiente
+├── DeployToAzure.md                # Guia completo de implantação no Azure + Streamlit Cloud
 └── README.md                       # Este arquivo
 ```
 
@@ -490,6 +498,10 @@ A interface abre automaticamente em `http://localhost:8501`.
 
 A URL da API é configurável via variável de ambiente `API_URL` (padrão: `http://localhost:8000`).
 
+### Deploy no Streamlit Community Cloud
+
+A UI também pode ser publicada gratuitamente em [share.streamlit.io](https://share.streamlit.io) apontando para a API hospedada no Azure. O arquivo [src/app/requirements.txt](src/app/requirements.txt) já está pronto para esse deploy (dependências enxutas, sem `xgboost`/`mlflow`/`feast`). O passo a passo está na **Fase 6** de [DeployToAzure.md](DeployToAzure.md).
+
 ---
 
 ## Feature Store (Feast)
@@ -647,7 +659,7 @@ pytest tests/ -v
 
 O pipeline é acionado em **push** ou **pull request** para a branch `main`.
 
-### Etapas
+### Job `build_and_test` (executado em todo push e PR)
 
 ```
 1. Checkout do repositório
@@ -657,6 +669,18 @@ O pipeline é acionado em **push** ou **pull request** para a branch `main`.
 5. Execução dos testes com pytest
 6. Validação do Feature Store (feast plan)
 ```
+
+### Job `deploy` (executado apenas em push para `main`)
+
+```
+7.  Login no Azure (via service principal armazenado em GitHub Secrets)
+8.  Login no Azure Container Registry
+9.  Build da imagem Docker e push para o ACR (tags: latest + SHA do commit)
+10. Update do Azure Container App com a nova imagem
+11. Smoke test do endpoint /token (espera HTTP 401 com credenciais inválidas)
+```
+
+Configuração do secret `AZURE_CREDENTIALS` e provisionamento dos recursos no Azure: ver [DeployToAzure.md](DeployToAzure.md).
 
 ### Executar o pipeline localmente
 
@@ -684,6 +708,46 @@ cd feature_repo && feast plan
 
 ---
 
+## Implantação no Azure
+
+O projeto inclui uma esteira completa para implantar a API no **Azure Container Apps** e a UI no **Streamlit Community Cloud**, com CI/CD automático no GitHub Actions.
+
+### Artefatos relevantes
+
+| Arquivo | Função |
+|---|---|
+| [Dockerfile](Dockerfile) | Build multi-stage da imagem da API (Python 3.10-slim, modelo MLflow embarcado) |
+| [.dockerignore](.dockerignore) | Exclui código de treino, testes e dados do contexto de build |
+| [requirements-api.txt](requirements-api.txt) | Dependências apenas de runtime de inferência (sem `streamlit`/`feast`/`evidently`) |
+| [src/app/requirements.txt](src/app/requirements.txt) | Dependências enxutas para o deploy no Streamlit Community Cloud |
+| [.github/workflows/ci_cd.yml](.github/workflows/ci_cd.yml) | Job `deploy` que builda, publica no ACR e atualiza o Container App |
+
+**Para o passo a passo completo** — provisionamento de infraestrutura no Azure, configuração de secrets no GitHub, validação local da imagem Docker, deploy do Streamlit e troubleshooting — consulte **[DeployToAzure.md](DeployToAzure.md)**.
+
+### Resumo do fluxo
+
+```
+git push origin main
+    │
+    ▼
+GitHub Actions
+    │
+    ├─► build_and_test  (lint + pytest + feast plan)
+    │
+    └─► deploy          (Docker build → push para ACR → update do Container App)
+                                │
+                                ▼
+                  Azure Container Apps (escala a zero)
+                                │
+                                ▼
+              https://<fqdn>.azurecontainerapps.io
+                                │
+                                ▼
+                Streamlit Cloud (UI consome a API)
+```
+
+---
+
 ## Segurança
 
 ### Autenticação
@@ -707,9 +771,10 @@ cd feature_repo && feast plan
 
 ### Recomendações para produção
 
+- **Implantação completa documentada em [DeployToAzure.md](DeployToAzure.md)** — provisionamento de infraestrutura, secrets e CI/CD para Azure Container Apps
 - Substituir o dicionário `VALID_PARTNERS` por um serviço de identidade (OAuth2, LDAP, Keycloak)
-- Armazenar `API_SECRET_KEY` em um cofre de segredos (AWS Secrets Manager, HashiCorp Vault)
-- Habilitar HTTPS via proxy reverso (nginx, Traefik)
+- Armazenar `API_SECRET_KEY` em um cofre de segredos (AWS Secrets Manager, HashiCorp Vault, Azure Key Vault)
+- Habilitar HTTPS via proxy reverso (nginx, Traefik) — no Azure Container Apps já é provido nativamente pelo `ingress external`
 - Adicionar logs de auditoria para todas as predições realizadas
 
 ---
