@@ -625,7 +625,7 @@ O modelo é registrado com o nome `XGBoost_Transaction_Score`. O estágio de cad
 None ──► Staging (implícito ao registrar) ──► Production ──► Archived
 ```
 
-A promoção automática para `Production` e o arquivamento das versões anteriores são gerenciados pelo próprio `train.py` via `MlflowClient`.
+A promoção automática para `Production` e o arquivamento das versões anteriores são gerenciados pelo próprio `train.py` via `MlflowClient`. **A API consome essa promoção em runtime**: o `InferenceEngine` consulta o registry para localizar o `run_id` da versão `Production` e carregar os artefatos correspondentes — só o modelo promovido é servido.
 
 ---
 

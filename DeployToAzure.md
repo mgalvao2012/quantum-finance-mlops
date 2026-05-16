@@ -27,6 +27,13 @@ Antes de seguir as fases abaixo, garanta que:
 
 3. **Você tem o Azure CLI instalado** (`brew install azure-cli`) e uma assinatura Azure ativa para a Fase 2.
 
+4. **Existe uma versão promovida no MLflow Registry.** A API resolve o caminho do modelo via `MlflowClient.get_latest_versions(MODEL_NAME, stages=["Production"])`, então o `mlruns.db` precisa ter ao menos uma versão em `Production`. Verifique com:
+   ```bash
+   python -c "import mlflow; mlflow.set_tracking_uri('sqlite:///mlruns.db'); \
+     print([v.version for v in mlflow.MlflowClient().get_latest_versions('XGBoost_Transaction_Score', stages=['Production'])])"
+   ```
+   Se a saída for `[]`, rode `python src/model/train.py` para gerar e promover um modelo.
+
 ---
 
 ## Fase 1 — Preparar o Repositório (local, executar uma vez)

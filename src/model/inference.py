@@ -2,6 +2,7 @@ import sys
 import os
 import glob
 import pandas as pd
+import mlflow
 import mlflow.xgboost
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -19,17 +20,33 @@ def _score_level(probability: float) -> str:
 def _resolve_model_path() -> str:
     """Return a path mlflow.xgboost.load_model can read.
 
-    Order of resolution:
+    Resolution order:
     1. MODEL_PATH env var (explicit override)
-    2. Local artifact dir discovered by glob (portable across host/container)
-    3. Fallback to the MLflow registry URI (only works when the registry's
-       stored source path matches the current filesystem)
+    2. Registry → run_id → local artifacts dir (honra a promoção `Production`)
+    3. Glob de mlruns/*/*/artifacts/model (bootstrap fallback)
+    4. mlflow URI `models:/<NAME>/Production` (último recurso)
     """
     explicit = os.getenv("MODEL_PATH")
     if explicit:
         return explicit
 
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+    try:
+        mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+        client = mlflow.MlflowClient()
+        versions = client.get_latest_versions(MODEL_NAME, stages=["Production"])
+        if versions:
+            v = versions[0]
+            run = client.get_run(v.run_id)
+            candidate = os.path.join(
+                base_dir, "mlruns", run.info.experiment_id, v.run_id, "artifacts", "model"
+            )
+            if os.path.isdir(candidate):
+                return candidate
+    except Exception:
+        pass
+
     matches = sorted(glob.glob(os.path.join(base_dir, "mlruns", "*", "*", "artifacts", "model")))
     if matches:
         return matches[-1]
